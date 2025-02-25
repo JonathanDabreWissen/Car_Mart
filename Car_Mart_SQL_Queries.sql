@@ -1,0 +1,14 @@
+CREATE TABLE CarMart (
+    CarID SERIAL PRIMARY KEY,
+    Company VARCHAR(100) NOT NULL,
+    Model VARCHAR(100) NOT NULL,
+    Seater INT NOT NULL,
+    FuelType VARCHAR(50) NOT NULL,
+    Type VARCHAR(50) NOT NULL,
+    Price DECIMAL(10,2) NOT NULL,
+    Sold BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+select * from CarMart;
+
+

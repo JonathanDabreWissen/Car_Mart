@@ -1,0 +1,5 @@
+//command prompt
+//set classpath=pgs_driver\postgresql-42.7.4.jar;.;%classpath%
+
+//powershell
+//$env:CLASSPATH = "pgs_driver\postgresql-42.7.4.jar;.;" + $env:CLASSPATH

@@ -1,0 +1,59 @@
+Car Mart
+---------
+* Insert the car details
+ 
+ 
+java CarMart
+---------------
+1. Add
+2. Search
+3. Update	(only price to be updated of specific car)
+4. Sold
+5. Exit
+---------------
+Enter choice :-
+ 
+ 
+CarID
+Company
+Model
+Seater
+FuelType
+Type
+Price
+Sold	true/false
+ 
+2. Search
+----------
+1. ALL		(All unsold cars)
+2. Company	(All cars of specific company)
+3. Type		(eg. Hatchback, Sedan, SUV)
+4. Price range	(to display all cars in the range of min to max)
+5. Exit
+-----------
+ 
+ 
+4. Sold
+------------
+1. ALL		(All sold cars)
+2. Update	(unsold cars to be updated as sold out)
+3. Exit
+------------
+
+
+
+Deliverables
+
+-------------
+
+Source Code
+
+SQL Queries
+
+ER Diagram
+
+ 
+Use PostgreSQL DB
+ 
+
+ 
