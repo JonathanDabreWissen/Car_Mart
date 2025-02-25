@@ -48,6 +48,7 @@ interface CarDAO {
     public void searchByType(String type);
     public void searchByPriceRange(double minPrice, double maxPrice);
     public void updateCarPrice(int carId, double newPrice);
+    public void markCarAsSold(int carId);
 
 }
 
@@ -79,7 +80,7 @@ class CarRecord implements CarDAO {
     @Override
     public void searchAllSoldCars() {
         Connection con = DBConnection.getConnectionObject();
-        String query = "SELECT * FROM CarMart WHERE sold = FALSE";
+        String query = "SELECT * FROM CarMart WHERE sold = TRUE";
         try (
              PreparedStatement pstmt = con.prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
@@ -168,6 +169,25 @@ class CarRecord implements CarDAO {
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
                 System.out.println("Price updated successfully for Car ID: " + carId);
+            } else {
+                System.out.println("Car ID not found.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void markCarAsSold(int carId) {
+        String query = "UPDATE CarMart SET sold = true WHERE carid = ?";
+        try (Connection con = DBConnection.getConnectionObject();
+            PreparedStatement pstmt = con.prepareStatement(query)) {
+            
+            pstmt.setInt(1, carId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Car ID: " + carId + " has been marked as SOLD.");
             } else {
                 System.out.println("Car ID not found.");
             }
@@ -442,6 +462,38 @@ public class CarMart {
 
                 case 4->{
 
+                    System.out.println("----------------------------------");
+                    System.out.println("\n Sold Menu");
+                    System.out.println("1. All sold");
+                    System.out.println("2. Update");
+                    System.out.println("3. Exit");
+
+                    
+                    int soldType;
+
+                    System.out.print("Enter Sold Type: ");
+                    try {
+                        soldType = scanner.nextInt();
+                    } catch (InputMismatchException e) {
+                        System.out.println("Invalid input format");
+                        scanner.nextLine();
+                        continue;
+                    }
+                    scanner.nextLine(); // Consume the newline character
+                    
+                    CarDAO carDAO = new CarRecord();
+
+                    if(soldType == 1){
+                        carDAO.searchAllSoldCars();
+                    }
+                    else if(soldType == 2){
+                        System.out.print("Enter Car ID: ");
+                        int carId = scanner.nextInt();                      
+                        scanner.nextLine();
+                        carDAO.markCarAsSold(carId);
+                       
+                    }
+                    
                 }
 
                 case 5->{
