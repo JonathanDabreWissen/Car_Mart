@@ -1,6 +1,7 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.InputMismatchException;
 import java.util.Scanner;
@@ -39,21 +40,24 @@ class DBConnection{
     
 }
 
-interface CarDAO{
+interface CarDAO {
     public void addRecord(Car c);
+    public void searchAllUnsoldCars();
+    public void searchByCompany(String company);
+    public void searchByType(String type);
+    public void searchByPriceRange(double minPrice, double maxPrice);
 }
 
-class CarRecord implements CarDAO{
-    public void addRecord(Car c){
-        
+class CarRecord implements CarDAO {
+    
+    @Override
+    public void addRecord(Car c) {
+        Connection con = DBConnection.getConnectionObject();
         String sql = "INSERT INTO CarMart (Company, Model, Seater, FuelType, Type, Price, Sold) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        
+        try(
+            PreparedStatement pstmt = con.prepareStatement(sql);){
 
-        try(Connection con = DBConnection.getConnectionObject();
-            PreparedStatement pstmt = con.prepareStatement(sql);
-        )
-        {
-            pstmt.setString(1,c.getCompany());
+            pstmt.setString(1, c.getCompany());
             pstmt.setString(2, c.getModel());
             pstmt.setInt(3, c.getSeater());
             pstmt.setString(4, c.getFuelType());
@@ -61,15 +65,98 @@ class CarRecord implements CarDAO{
             pstmt.setDouble(6, c.getPrice());
             pstmt.setBoolean(7, c.isSold());
 
-            // Execute the insert
             int rowsAffected = pstmt.executeUpdate();
             System.out.println(rowsAffected + " row(s) inserted successfully.");
 
-        }catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public void searchAllUnsoldCars() {
+        Connection con = DBConnection.getConnectionObject();
+        String query = "SELECT * FROM CarMart WHERE sold = FALSE";
+        try (
+             PreparedStatement pstmt = con.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            displayResults(rs);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void searchByCompany(String company) {
+        String query = "SELECT * FROM CarMart WHERE company = ? AND sold = FALSE";
+        Connection con = DBConnection.getConnectionObject();
+        try (
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+            
+            pstmt.setString(1, company.toUpperCase()); // Ensure case consistency
+            try (ResultSet rs = pstmt.executeQuery()) {
+                displayResults(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void searchByType(String type) {
+        String query = "SELECT * FROM CarMart WHERE type = ? AND sold = FALSE";
+        Connection con = DBConnection.getConnectionObject();
+        try (
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+
+            pstmt.setString(1, type.toUpperCase());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                displayResults(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void searchByPriceRange(double minPrice, double maxPrice) {
+        String query = "SELECT * FROM CarMart WHERE price BETWEEN ? AND ? AND sold = FALSE";
+        Connection con = DBConnection.getConnectionObject();
+        
+        try (
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+
+            pstmt.setDouble(1, minPrice);
+            pstmt.setDouble(2, maxPrice);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                displayResults(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void displayResults(ResultSet rs) throws SQLException {
+        boolean hasResults = false;
+        while (rs.next()) {
+            hasResults = true;
+            System.out.println("Car ID: " + rs.getInt("carid"));
+            System.out.println("Company: " + rs.getString("company"));
+            System.out.println("Model: " + rs.getString("model"));
+            System.out.println("Seater Capacity: " + rs.getInt("seater"));
+            System.out.println("Fuel Type: " + rs.getString("fueltype"));
+            System.out.println("Type: " + rs.getString("type"));
+            System.out.println("Price: " + rs.getDouble("price"));
+            System.out.println("Sold: " + (rs.getBoolean("sold") ? "YES" : "NO"));
+            System.out.println("--------------------------");
+        }
+        if (!hasResults) {
+            System.out.println("No cars found matching the criteria.");
+        }
+    }
 }
+
 class Car {
     private int carID;
     private String company;
@@ -249,6 +336,54 @@ public class CarMart {
 
                 case 2->{
 
+                    System.out.println("----------------------------------");
+                    System.out.println("\nSearch Menu");
+                    System.out.println("1. All Unsold");
+                    System.out.println("2. By Company");
+                    System.out.println("3. By Type");
+                    System.out.println("4. By Price Range");
+                    System.out.println("5. Exit");
+
+                    
+                    int searchType;
+
+                    System.out.print("Enter Search Type: ");
+                    try {
+                        searchType = scanner.nextInt();
+                    } catch (InputMismatchException e) {
+                        System.out.println("Invalid input format");
+                        scanner.nextLine();
+                        continue;
+                    }
+                    scanner.nextLine(); // Consume the newline character
+                    
+                    CarDAO carDAO = new CarRecord();
+
+                    if(searchType == 1){
+                        carDAO.searchAllUnsoldCars();
+                    }
+                    else if(searchType == 2){
+                        System.out.print("Enter Company: ");
+                        String company = scanner.nextLine();
+                        carDAO.searchByCompany(company);
+                    }
+                    else if(searchType == 3){
+                        System.out.print("Enter Type: ");
+                        String type = scanner.nextLine();
+                        carDAO.searchByType(type);
+                    }
+                    else if(searchType == 4){
+                        System.out.print("Enter Minimum Price Limit: ");
+                        double minPrice = scanner.nextDouble();                      
+                        scanner.nextLine(); // Consume the newline character;
+
+                        System.out.print("Enter Maximum Price Limit: ");
+                        double maxPrice  = scanner.nextDouble();
+                        scanner.nextLine(); // Consume the newline character
+
+                        carDAO.searchByPriceRange(minPrice, maxPrice);
+                    }
+                    
                 }
 
                 case 3->{
@@ -261,6 +396,7 @@ public class CarMart {
 
                 case 5->{
                     scanner.close();
+                    DBConnection.closeConnection();
                     System.out.println("Exiting the code");
                 }
 
