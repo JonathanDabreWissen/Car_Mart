@@ -42,10 +42,13 @@ class DBConnection{
 
 interface CarDAO {
     public void addRecord(Car c);
+    public void searchAllSoldCars();
     public void searchAllUnsoldCars();
     public void searchByCompany(String company);
     public void searchByType(String type);
     public void searchByPriceRange(double minPrice, double maxPrice);
+    public void updateCarPrice(int carId, double newPrice);
+
 }
 
 class CarRecord implements CarDAO {
@@ -68,6 +71,20 @@ class CarRecord implements CarDAO {
             int rowsAffected = pstmt.executeUpdate();
             System.out.println(rowsAffected + " row(s) inserted successfully.");
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void searchAllSoldCars() {
+        Connection con = DBConnection.getConnectionObject();
+        String query = "SELECT * FROM CarMart WHERE sold = FALSE";
+        try (
+             PreparedStatement pstmt = con.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            displayResults(rs);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -123,7 +140,7 @@ class CarRecord implements CarDAO {
     public void searchByPriceRange(double minPrice, double maxPrice) {
         String query = "SELECT * FROM CarMart WHERE price BETWEEN ? AND ? AND sold = FALSE";
         Connection con = DBConnection.getConnectionObject();
-        
+
         try (
              PreparedStatement pstmt = con.prepareStatement(query)) {
 
@@ -131,6 +148,28 @@ class CarRecord implements CarDAO {
             pstmt.setDouble(2, maxPrice);
             try (ResultSet rs = pstmt.executeQuery()) {
                 displayResults(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void updateCarPrice(int carId, double newPrice) {
+        String query = "UPDATE CarMart SET price = ? WHERE carid = ?";
+        Connection con = DBConnection.getConnectionObject();
+
+        try (
+            PreparedStatement pstmt = con.prepareStatement(query)) {
+            
+            pstmt.setDouble(1, newPrice);
+            pstmt.setInt(2, carId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Price updated successfully for Car ID: " + carId);
+            } else {
+                System.out.println("Car ID not found.");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -387,6 +426,17 @@ public class CarMart {
                 }
 
                 case 3->{
+                    CarDAO carDAO = new CarRecord();
+
+                    System.out.print("Enter Car ID: ");
+                    int carId = scanner.nextInt();                      
+                    scanner.nextLine();
+
+                    System.out.print("Enter New Price: ");
+                    double newPrice = scanner.nextDouble();                      
+                    scanner.nextLine();
+
+                    carDAO.updateCarPrice(carId, newPrice);
 
                 }
 
