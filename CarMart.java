@@ -1,23 +1,23 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-interface CarDAO{
-
-}
 
 class DBConnection{
-
+    
     private static Connection con = null;
-
+    
     private DBConnection(){
 
     }
-
+    
     public static Connection getConnectionObject(){
         if(con == null){
             try {  
+                Class.forName("org.postgresql.Driver");
                 con = DriverManager.getConnection("jdbc:postgresql://localhost:5432/demodb", "postgres", "tiger");
             } catch (Exception e) {
                 System.out.println(e);
@@ -26,8 +26,50 @@ class DBConnection{
         return con;
     }
 
+    public static void closeConnection() {
+        if (con != null) {
+            try {
+                con.close();
+                con = null;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
 }
 
+interface CarDAO{
+    public void addRecord(Car c);
+}
+
+class CarRecord implements CarDAO{
+    public void addRecord(Car c){
+        
+        String sql = "INSERT INTO CarMart (Company, Model, Seater, FuelType, Type, Price, Sold) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        
+
+        try(Connection con = DBConnection.getConnectionObject();
+            PreparedStatement pstmt = con.prepareStatement(sql);
+        )
+        {
+            pstmt.setString(1,c.getCompany());
+            pstmt.setString(2, c.getModel());
+            pstmt.setInt(3, c.getSeater());
+            pstmt.setString(4, c.getFuelType());
+            pstmt.setString(5, c.getType());
+            pstmt.setDouble(6, c.getPrice());
+            pstmt.setBoolean(7, c.isSold());
+
+            // Execute the insert
+            int rowsAffected = pstmt.executeUpdate();
+            System.out.println(rowsAffected + " row(s) inserted successfully.");
+
+        }catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
 class Car {
     private int carID;
     private String company;
@@ -38,7 +80,18 @@ class Car {
     private double price;
     private boolean sold;
 
-    // Constructor
+    // Constructor for inserting a new car (No CarID)
+    public Car(String company, String model, int seater, String fuelType, String type, double price, boolean sold) {
+        this.company = company;
+        this.model = model;
+        this.seater = seater;
+        this.fuelType = fuelType;
+        this.type = type;
+        this.price = price;
+        this.sold = sold;
+    }
+
+    // Constructor for retrieving form DB
     public Car(int carID, String company, String model, int seater, String fuelType, String type, double price, boolean sold) {
         this.carID = carID;
         this.company = company;
@@ -157,17 +210,65 @@ public class CarMart {
                 scanner.nextLine();
                 continue;
             }
+            scanner.nextLine(); // Consume the newline character
             
             System.out.println("----------------------------------"); 
 
-            /*
-            1. Add
-            2. Search
-            3. Update	(only price to be updated of specific car)
-            4. Sold
-            5. Exit
-             */
+            switch(choice){
+                case 1->{
+                    
 
-        }
+                    System.out.print("Enter Company: ");
+                    String company = scanner.nextLine();
+                    
+
+                    System.out.print("Enter Model: ");
+                    String model = scanner.nextLine();
+
+                    System.out.print("Enter Seater Capacity: ");
+                    int seater = scanner.nextInt();
+                    scanner.nextLine(); // Consume the newline character
+
+                    System.out.print("Enter Fuel Type: ");
+                    String fuelType = scanner.nextLine();
+
+                    System.out.print("Enter Type (Sedan/SUV/etc.): ");
+                    String type = scanner.nextLine();
+
+                    System.out.print("Enter Price: ");
+                    double price = scanner.nextDouble();
+                    scanner.nextLine(); // Consume the newline character
+
+                    Car car = new Car(company, model, seater, fuelType, type, price, false);
+
+                    // Add car record to the database
+                    CarDAO carDAO = new CarRecord();
+                    carDAO.addRecord(car);
+                    
+                }
+
+                case 2->{
+
+                }
+
+                case 3->{
+
+                }
+
+                case 4->{
+
+                }
+
+                case 5->{
+                    scanner.close();
+                    System.out.println("Exiting the code");
+                }
+
+                default ->{
+                    System.out.println("Check your choice");
+                }
+            }
+
+        } while (choice !=5);
     }
 }
